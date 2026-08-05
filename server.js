@@ -212,12 +212,30 @@ app.get("/api/h2h/:homeId/:awayId", async (req, res) => {
 app.get("/api/seasons/:compId", async (req, res) => {
   const { compId } = req.params;
   try {
-    const data = await statsApiGet("/football/seasons", { competition_id: compId });
+    const data = await statsApiGet(`/football/competitions/${compId}/seasons`);
     res.json({ seasons: data.data || data });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: err.message });
   }
+});
+
+// IDs des saisons précédentes (2025-2026) — utilisés pour les stats historiques
+// quand la saison en cours n'a pas encore commencé.
+const PREV_SEASON_IDS = {
+  "comp_3039": "sn_3057848", // Premier League 2025-2026
+  "comp_3040": "sn_3057849", // La Liga 2025-2026 (à vérifier)
+  "comp_3041": "sn_3057850", // Bundesliga 2025-2026 (à vérifier)
+  "comp_3042": "sn_3057851", // Serie A 2025-2026 (à vérifier)
+  "comp_3043": "sn_3057852", // Ligue 1 2025-2026 (à vérifier)
+  "comp_3044": "sn_3057853", // UCL 2025-2026 (à vérifier)
+};
+
+// Expose l'ID de saison précédente pour qu'on puisse charger les stats historiques
+app.get("/api/prev-season/:compId", (req, res) => {
+  const { compId } = req.params;
+  const seasonId = PREV_SEASON_IDS[compId] || null;
+  res.json({ compId, prevSeasonId: seasonId });
 });
 
 // Vider tous les caches (utile après un déploiement ou pour forcer un refresh)
