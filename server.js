@@ -169,17 +169,45 @@ app.get("/api/lineups/:matchId", async (req, res) => {
   }
 });
 
-// Stats de saison d'une équipe (forme, buts, xG agrégé sur toute la saison)
+// Stats de saison d'une équipe — essaie la saison en cours, puis la précédente
 app.get("/api/team-stats/:teamId/:seasonId", async (req, res) => {
   const { teamId, seasonId } = req.params;
   const key = `${teamId}_${seasonId}`;
   try {
     const result = await cached(caches.teamStats, key, async () => {
+      try {
+        const data = await statsApiGet(`/football/teams/${teamId}/stats`, {
+          season_id: seasonId,
+        });
+        return { stats: data.data || data, source: "current" };
+      } catch (err) {
+        if (!err.message.includes("404")) throw err;
+        // Saison en cours sans données → essayer la saison précédente
+        // On cherche la prev season en listant les saisons de la compétition
+        return { stats: null, source: "none" };
+      }
+    }, 60 * 60 * 1000)();
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Stats d'une équipe sur une saison précise (pour l'historique)
+app.get("/api/team-stats-prev/:teamId/:compId", async (req, res) => {
+  const { teamId, compId } = req.params;
+  const prevSeasonId = PREV_SEASON_IDS[compId];
+  if (!prevSeasonId) return res.json({ stats: null, source: "no_prev_season" });
+
+  const key = `prev_${teamId}_${prevSeasonId}`;
+  try {
+    const result = await cached(caches.teamStats, key, async () => {
       const data = await statsApiGet(`/football/teams/${teamId}/stats`, {
-        season_id: seasonId,
+        season_id: prevSeasonId,
       });
-      return { stats: data };
-    }, 60 * 60 * 1000)(); // cache 1h (données de saison, peu volatile)
+      return { stats: data.data || data, prevSeasonId, source: "previous" };
+    }, 24 * 60 * 60 * 1000)(); // cache 24h, données historiques stables
     res.json(result);
   } catch (err) {
     console.error(err);
@@ -223,12 +251,12 @@ app.get("/api/seasons/:compId", async (req, res) => {
 // IDs des saisons précédentes (2025-2026) — utilisés pour les stats historiques
 // quand la saison en cours n'a pas encore commencé.
 const PREV_SEASON_IDS = {
-  "comp_3039": "sn_3057848", // Premier League 2025-2026
-  "comp_3040": "sn_3057849", // La Liga 2025-2026 (à vérifier)
-  "comp_3041": "sn_3057850", // Bundesliga 2025-2026 (à vérifier)
-  "comp_3042": "sn_3057851", // Serie A 2025-2026 (à vérifier)
-  "comp_3043": "sn_3057852", // Ligue 1 2025-2026 (à vérifier)
-  "comp_3044": "sn_3057853", // UCL 2025-2026 (à vérifier)
+  "comp_3039": "sn_6125938", // Premier League 2025-2026
+  "comp_3040": "sn_6125939", // La Liga 2025-2026 (à confirmer)
+  "comp_3041": "sn_6125940", // Bundesliga 2025-2026 (à confirmer)
+  "comp_3042": "sn_6125941", // Serie A 2025-2026 (à confirmer)
+  "comp_3043": "sn_6125942", // Ligue 1 2025-2026 (à confirmer)
+  "comp_3044": "sn_6125943", // UCL 2025-2026 (à confirmer)
 };
 
 // Expose l'ID de saison précédente pour qu'on puisse charger les stats historiques
