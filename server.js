@@ -97,7 +97,7 @@ app.get("/api/fixtures/:compId", async (req, res) => {
     const result = await cached(caches.fixtures, key, async () => {
       const data = await statsApiGet("/football/matches", {
         competition_id: compId,
-        status: "scheduled,live",
+        status: "scheduled",
         per_page: 50,
       });
       return { fixtures: data.data || [] };
