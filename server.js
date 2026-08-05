@@ -208,6 +208,18 @@ app.get("/api/h2h/:homeId/:awayId", async (req, res) => {
   }
 });
 
+// Liste les saisons disponibles pour une compétition
+app.get("/api/seasons/:compId", async (req, res) => {
+  const { compId } = req.params;
+  try {
+    const data = await statsApiGet("/football/seasons", { competition_id: compId });
+    res.json({ seasons: data.data || data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Vider tous les caches (utile après un déploiement ou pour forcer un refresh)
 app.get("/api/clear-cache", (req, res) => {
   Object.values(caches).forEach((c) => c.clear());
