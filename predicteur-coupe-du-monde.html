@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prédicteur Coupe du Monde 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #181B1F;
+    --surface: #232730;
+    --surface-raised: #2B303A;
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.18);
+    --text-primary: #EDEDE8;
+    --text-secondary: #9CA3AD;
+    --text-tertiary: #6E747D;
+    --accent: #FF6A1A;
+    --accent-dim: rgba(255,106,26,0.14);
+    --win: #2BAA6E;
+    --win-dim: rgba(43,170,110,0.16);
+    --draw: #5B6068;
+    --draw-dim: rgba(91,96,104,0.2);
+    --gold: #D4AF6A;
+    --font-display: 'Oswald', sans-serif;
+    --font-body: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .fade-in { animation: fadeIn 0.5s ease both; }
+    .fade-in-delay-1 { animation: fadeIn 0.5s ease 0.08s both; }
+    .fade-in-delay-2 { animation: fadeIn 0.5s ease 0.16s both; }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 4px var(--accent-dim); }
+    50% { box-shadow: 0 0 0 7px var(--accent-dim); }
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .stadium-scene {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 360px;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .stadium-glow {
+    position: absolute;
+    top: -10%; left: 50%;
+    width: 800px; height: 420px;
+    transform: translateX(-50%);
+    background: radial-gradient(ellipse 800px 420px at 50% 0%, rgba(255,106,26,0.12), transparent 70%);
+  }
+  .floodlight {
+    position: absolute;
+    top: -40px;
+    width: 0;
+    height: 0;
+    border-left: 90px solid transparent;
+    border-right: 90px solid transparent;
+    border-top: 380px solid rgba(255, 226, 180, 0.05);
+    transform-origin: top center;
+  }
+  .floodlight.fl-1 { left: 8%; transform: rotate(18deg); }
+  .floodlight.fl-2 { left: 32%; transform: rotate(6deg); border-top-color: rgba(255, 226, 180, 0.035); }
+  .floodlight.fl-3 { right: 28%; transform: rotate(-6deg); border-top-color: rgba(255, 226, 180, 0.035); }
+  .floodlight.fl-4 { right: 4%; transform: rotate(-18deg); }
+  .crowd-row {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-around;
+    opacity: 0.5;
+  }
+  .crowd-dot {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: twinkle 3.2s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%, 100% { opacity: 0.15; }
+    50% { opacity: 0.7; }
+  }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 24px 80px; position: relative; z-index: 1; }
+
+  header { padding: 48px 0 28px; }
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-dim);
+    animation: pulseGlow 2.2s ease-in-out infinite;
+  }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 42px;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    line-height: 1.05;
+  }
+  .subhead { color: var(--text-secondary); font-size: 15px; margin-top: 10px; max-width: 540px; }
+
+  .header-stats {
+    display: flex;
+    gap: 28px;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+  }
+  .header-stat-num {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .header-stat-label {
+    font-size: 11px;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 2px;
+  }
+
+
+  nav.tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  nav.tabs button {
+    font-family: var(--font-display);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    padding: 12px 18px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s;
+  }
+  nav.tabs button:hover { color: var(--text-secondary); }
+  nav.tabs button.active { color: var(--text-primary); border-bottom-color: var(--accent); }
+
+  section.panel { display: none; padding-top: 32px; }
+  section.panel.active { display: block; animation: fadeIn 0.35s ease both; }
+
+  /* ---- Predicteur ---- */
+  .selector-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .field label {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+  select, .fixture-select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    padding: 12px 14px;
+    border-radius: 6px;
+    appearance: none;
+    cursor: pointer;
+  }
+  select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .fixture-bar { margin-bottom: 28px; }
+  .fixture-row { display: flex; gap: 10px; }
+  .fixture-row .fixture-select { flex: 1; }
+  .live-btn {
+    white-space: nowrap;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    color: var(--accent);
+    padding: 0 16px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  .live-btn:hover { background: var(--surface-raised); }
+  .live-btn:disabled { opacity: 0.5; cursor: default; }
+  .live-status {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    margin-top: 8px;
+    min-height: 16px;
+  }
+  .live-status.error { color: var(--accent); }
+  .live-status.ok { color: var(--win); }
+
+  .scoreboard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .scoreboard-top {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    padding: 28px 24px;
+    background: linear-gradient(180deg, var(--surface-raised), var(--surface));
+    border-bottom: 1px solid var(--border);
+  }
+  .team-block.right { text-align: right; }
+  .team-name { font-family: var(--font-display); font-size: 20px; text-transform: uppercase; letter-spacing: 0.01em; }
+  .team-meta { font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary); margin-top: 6px; }
+  .team-xg { font-family: var(--font-mono); font-size: 12px; color: var(--accent); margin-top: 4px; }
+  .team-xg.muted { color: var(--text-tertiary); }
+  .team-form { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+  .team-note { font-size: 12px; color: var(--text-secondary); margin-top: 4px; max-width: 180px; }
+  .team-note.flag { color: var(--accent); }
+  .team-block.right .team-note { margin-left: auto; }
+
+  .score-display {
+    font-family: var(--font-mono);
+    font-size: 44px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-primary);
+    padding: 0 20px;
+    text-shadow: 0 0 24px rgba(255,106,26,0.25);
+  }
+  .score-label {
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    padding: 10px 0 14px;
+  }
+
+  .prob-section { padding: 22px 24px 26px; }
+  .prob-labels {
+    display: flex;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+  }
+  .prob-labels span:first-child { flex: 1; }
+  .prob-labels span:last-child { flex: 1; text-align: right; }
+  .prob-labels span.mid { width: 60px; text-align: center; }
+
+  .prob-bar { display: flex; height: 34px; border-radius: 7px; overflow: hidden; }
+  .prob-seg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    transition: width 0.3s ease;
+  }
+  .seg-a { background: var(--win); color: #06301B; }
+  .seg-draw { background: var(--draw); color: #0B0D0F; }
+  .seg-b { background: var(--accent); color: #2E1300; }
+
+  .score-pick {
+    margin-top: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 14px 18px;
+  }
+  .score-pick-label { font-size: 13px; color: var(--text-secondary); }
+  .score-pick-value { font-family: var(--font-mono); font-size: 18px; font-weight: 600; }
+  .score-pick-pct { font-size: 12px; color: var(--text-tertiary); margin-left: 8px; }
+
+  .disclaimer {
+    margin-top: 18px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    border-left: 2px solid var(--border-strong);
+    padding-left: 12px;
+  }
+
+  .odds-card {
+    margin-top: 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 22px;
+  }
+  .odds-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+  }
+  .odds-card-title {
+    font-family: var(--font-display);
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+  .odds-card-empty {
+    font-size: 13px;
+    color: var(--text-tertiary);
+    padding: 4px 0;
+  }
+  .odds-row {
+    display: grid;
+    grid-template-columns: 1fr 70px 70px 1fr;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 0;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .odds-row:first-of-type { border-top: none; }
+  .odds-outcome { color: var(--text-secondary); }
+  .odds-val { font-family: var(--font-mono); text-align: center; }
+  .odds-val.model { color: var(--text-primary); }
+  .odds-val.market { color: var(--text-secondary); }
+  .odds-edge {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    text-align: right;
+    font-weight: 600;
+  }
+  .odds-edge.pos { color: var(--win); }
+  .odds-edge.neg { color: var(--accent); }
+  .odds-edge.flat { color: var(--text-tertiary); }
+  .odds-legend {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-tertiary);
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border-strong);
+    margin-bottom: 2px;
+  }
+  .odds-legend span:nth-child(2), .odds-legend span:nth-child(3) { text-align: center; }
+  .odds-legend span:last-child { text-align: right; }
+
+  /* ---- Groupes ---- */
+  .groups-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 14px;
+  }
+  .group-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+  }
+  .group-card-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .group-letter { font-family: var(--font-display); font-size: 15px; letter-spacing: 0.04em; color: var(--accent); text-transform: uppercase; }
+  .group-status { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; }
+  .group-team-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 0;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+  }
+  .group-team-row:first-of-type { border-top: none; }
+  .group-team-name { color: var(--text-primary); }
+  .group-team-fifa { font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary); }
+
+  /* ---- Classement FIFA ---- */
+  .rank-table { width: 100%; border-collapse: collapse; }
+  .rank-table th {
+    text-align: left;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    padding: 0 12px 10px;
+    border-bottom: 1px solid var(--border-strong);
+  }
+  .rank-table td {
+    padding: 12px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+  }
+  .rank-table tr:hover td { background: var(--surface); }
+  .rank-num { font-family: var(--font-mono); color: var(--text-tertiary); width: 36px; }
+  .rank-pts { font-family: var(--font-mono); text-align: right; color: var(--text-secondary); width: 90px; }
+  .rank-name { font-weight: 500; }
+  .rank-bar-cell { width: 140px; }
+  .rank-bar-track { width: 100%; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .rank-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; }
+
+  .podium {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .podium-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 14px;
+    text-align: center;
+  }
+  .podium-card.gold { border-color: rgba(212,175,106,0.4); order: 2; transform: translateY(-8px); }
+  .podium-card.silver { order: 1; }
+  .podium-card.bronze { order: 3; }
+  .podium-rank {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+  .podium-card.gold .podium-rank { color: var(--gold); }
+  .podium-name { font-family: var(--font-display); font-size: 17px; text-transform: uppercase; margin-bottom: 6px; }
+  .podium-pts { font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary); }
+  .podium-row-wrap { display: flex; }
+
+  footer {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 28px; }
+    .scoreboard-top { grid-template-columns: 1fr; gap: 16px; text-align: center; }
+    .team-block.right { text-align: center; }
+    .team-block.right .team-note { margin-left: 0; }
+    .score-display { padding: 4px 0; }
+    .selector-row { grid-template-columns: 1fr; }
+    .header-stats { gap: 18px; flex-wrap: wrap; }
+    .podium { grid-template-columns: 1fr; }
+    .podium-card.gold { order: 0; transform: none; }
+    .podium-card.silver { order: 1; }
+    .podium-card.bronze { order: 2; }
+    .rank-bar-cell { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stadium-scene" aria-hidden="true">
+  <div class="stadium-glow"></div>
+  <div class="floodlight fl-1"></div>
+  <div class="floodlight fl-2"></div>
+  <div class="floodlight fl-3"></div>
+  <div class="floodlight fl-4"></div>
+  <div class="crowd-row" id="crowd-row"></div>
+</div>
+<div class="wrap">
+
+  <header class="fade-in">
+    <div class="eyebrow">En direct — Mondial 2026</div>
+    <h1>Prédicteur Coupe du Monde</h1>
+    <p class="subhead">Probabilités calculées avec un modèle de Poisson, à partir du classement FIFA, des xG des matchs déjà joués et des absences connues de chaque sélection.</p>
+
+    <div class="header-stats">
+      <div><div class="header-stat-num" id="stat-teams">—</div><div class="header-stat-label">Sélections suivies</div></div>
+      <div><div class="header-stat-num" id="stat-groups">12</div><div class="header-stat-label">Groupes</div></div>
+      <div><div class="header-stat-num" id="stat-fixtures">7</div><div class="header-stat-label">Matchs avec cotes</div></div>
+    </div>
+
+    <nav class="tabs">
+      <button class="active" data-panel="predict">Prédicteur</button>
+      <button data-panel="groups">Groupes</button>
+      <button data-panel="ranking">Classement FIFA</button>
+    </nav>
+  </header>
+
+  <section class="panel active fade-in-delay-1" id="panel-predict">
+
+    <div class="fixture-bar field">
+      <label for="fixture-select">Match à venir</label>
+      <div class="fixture-row">
+        <select id="fixture-select" class="fixture-select"></select>
+        <button id="live-load-btn" class="live-btn" type="button">Charger en direct</button>
+      </div>
+      <div id="live-status" class="live-status"></div>
+    </div>
+
+    <div class="selector-row">
+      <div class="field">
+        <label for="team-a">Équipe A</label>
+        <select id="team-a"></select>
+      </div>
+      <div class="field">
+        <label for="team-b">Équipe B</label>
+        <select id="team-b"></select>
+      </div>
+    </div>
+
+    <div class="scoreboard">
+      <div class="scoreboard-top">
+        <div class="team-block" id="team-a-block"></div>
+        <div class="score-display" id="score-display">0.0 – 0.0</div>
+        <div class="team-block right" id="team-b-block"></div>
+      </div>
+      <div class="score-label">Buts attendus — modèle de Poisson</div>
+
+      <div class="prob-section">
+        <div class="prob-labels">
+          <span id="label-a"></span>
+          <span class="mid">Nul</span>
+          <span id="label-b"></span>
+        </div>
+        <div class="prob-bar">
+          <div class="prob-seg seg-a" id="seg-a"></div>
+          <div class="prob-seg seg-draw" id="seg-draw"></div>
+          <div class="prob-seg seg-b" id="seg-b"></div>
+        </div>
+
+        <div class="score-pick">
+          <span class="score-pick-label">Score le plus probable</span>
+          <span><span class="score-pick-value" id="best-score"></span><span class="score-pick-pct" id="best-pct"></span></span>
+        </div>
+      </div>
+    </div>
+
+    <div id="odds-zone"></div>
+
+    <p class="disclaimer">Données rassemblées manuellement (classement FIFA, absences, cotes Unibet) à la date du 17 juin 2026 — pas un flux temps réel. Phase de groupes : pas d'avantage domicile/extérieur appliqué, sauf pour les trois pays hôtes. La comparaison cote vs modèle est fournie à titre informatif, ce n'est pas un conseil de pari.</p>
+
+  </section>
+
+  <section class="panel" id="panel-groups">
+    <div class="groups-grid" id="groups-grid"></div>
+  </section>
+
+  <section class="panel" id="panel-ranking">
+    <div class="podium" id="podium"></div>
+    <table class="rank-table">
+      <thead>
+        <tr><th>#</th><th>Sélection</th><th></th><th style="text-align:right;">Points FIFA</th></tr>
+      </thead>
+      <tbody id="rank-body"></tbody>
+    </table>
+  </section>
+
+  <footer>Prédicteur basé sur un modèle statistique simplifié — à but informatif, ne constitue pas un pronostic garanti.</footer>
+</div>
+
+<script>
+// ===================================================================
+// CONFIGURATION SERVEUR — à remplir une fois le serveur déployé (voir
+// GUIDE-DEPLOIEMENT.md). Laisse vide ("") pour garder l'app en mode
+// hors-ligne avec les données déjà intégrées ci-dessous.
+// Exemple : "https://predicteur-coupe-du-monde.onrender.com"
+// ===================================================================
+const SERVER_URL = "";
+
+const TEAMS = {
+  france:      { name: "France", flag: "🇫🇷", fifa: 1877, group: "I", note: "Sans Ekitiké (blessé)", absence: -0.10, host: false, xgDiff: null, recentForm: { gf: 12, ga: 6 } },
+  espagne:     { name: "Espagne", flag: "🇪🇸", fifa: 1876, group: "H", note: "Effectif complet", absence: 0, host: false, xgDiff: 1.99, recentForm: { gf: 7, ga: 2 } },
+  argentine:   { name: "Argentine", flag: "🇦🇷", fifa: 1875, group: "J", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 14, ga: 1 } },
+  angleterre:  { name: "Angleterre", flag: "🏴", fifa: 1826, group: "L", note: "Sans Alexander-Arnold, Saka incertain", absence: -0.06, host: false, xgDiff: null, recentForm: { gf: 7, ga: 2 } },
+  portugal:    { name: "Portugal", flag: "🇵🇹", fifa: 1764, group: "K", note: "Sans A. Silva, J. Palhinha", absence: -0.04, host: false, xgDiff: null, recentForm: { gf: 15, ga: 3 } },
+  bresil:      { name: "Brésil", flag: "🇧🇷", fifa: 1761, group: "C", note: "Vague de blessures (dont Rodrygo)", absence: -0.15, host: false, xgDiff: -0.30, recentForm: { gf: 13, ga: 7 } },
+  paysbas:     { name: "Pays-Bas", flag: "🇳🇱", fifa: 1758, group: "F", note: "Effectif complet", absence: 0, host: false, xgDiff: 0.19, recentForm: { gf: 7, ga: 6 } },
+  maroc:       { name: "Maroc", flag: "🇲🇦", fifa: 1756, group: "C", note: "Sans Aguerd, Ezzalzouli, Igamane", absence: -0.12, host: false, xgDiff: 0.30, recentForm: { gf: 9, ga: 4 } },
+  belgique:    { name: "Belgique", flag: "🇧🇪", fifa: 1735, group: "G", note: "Effectif quasi complet", absence: -0.02, host: false, xgDiff: null, recentForm: { gf: 14, ga: 4 } },
+  allemagne:   { name: "Allemagne", flag: "🇩🇪", fifa: 1730, group: "E", note: "Effectif complet", absence: 0, host: false, xgDiff: 3.81, recentForm: { gf: 19, ga: 6 } },
+  croatie:     { name: "Croatie", flag: "🇭🇷", fifa: 1717, group: "L", note: "Modric présent, complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 8, ga: 9 } },
+  colombie:    { name: "Colombie", flag: "🇨🇴", fifa: 1693, group: "K", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 10, ga: 6 } },
+  senegal:     { name: "Sénégal", flag: "🇸🇳", fifa: 1689, group: "E", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 8, ga: 7 } },
+  mexique:     { name: "Mexique", flag: "🇲🇽", fifa: 1681, group: "A", note: "Pays hôte", absence: 0, host: true, xgDiff: 1.34, recentForm: { gf: 11, ga: 2 } },
+  usa:         { name: "USA", flag: "🇺🇸", fifa: 1673, group: "D", note: "Pays hôte", absence: 0, host: true, xgDiff: 0.88, recentForm: { gf: 10, ga: 12 } },
+  uruguay:     { name: "Uruguay", flag: "🇺🇾", fifa: 1673, group: "H", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 3, ga: 7 } },
+  japon:       { name: "Japon", flag: "🇯🇵", fifa: 1660, group: "F", note: "Sans Minamino (blessé)", absence: -0.05, host: false, xgDiff: -0.19, recentForm: { gf: 8, ga: 2 } },
+  suisse:      { name: "Suisse", flag: "🇨🇭", fifa: 1649, group: "B", note: "Effectif complet", absence: 0, host: false, xgDiff: 2.48, recentForm: { gf: 9, ga: 7 } },
+  norvege:     { name: "Norvège", flag: "🇳🇴", fifa: 1551, group: "I", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 9, ga: 5 } },
+  irak:        { name: "Irak", flag: "🇮🇶", fifa: 1503, group: "I", note: "Dernier qualifié, outsider", absence: 0, host: false, xgDiff: null, recentForm: { gf: 6, ga: 5 } },
+  algerie:     { name: "Algérie", flag: "🇩🇿", fifa: 1564, group: "J", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 12, ga: 3 } },
+  autriche:    { name: "Autriche", flag: "🇦🇹", fifa: 1593, group: "J", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 11, ga: 3 } },
+  jordanie:    { name: "Jordanie", flag: "🇯🇴", fifa: 1463, group: "J", note: "Sans Ibrahim Sabra (blessé)", absence: -0.08, host: false, xgDiff: null, recentForm: { gf: 9, ga: 5 } },
+  rdcongo:     { name: "RD Congo", flag: "🇨🇩", fifa: 1478, group: "K", note: "Retour après 50 ans", absence: 0, host: false, xgDiff: null, recentForm: { gf: 6, ga: 3 } },
+  ouzbekistan: { name: "Ouzbékistan", flag: "🇺🇿", fifa: 1465, group: "K", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 4, ga: 5 } },
+  ghana:       { name: "Ghana", flag: "🇬🇭", fifa: 1481, group: "L", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 3, ga: 11 } },
+  panama:      { name: "Panama", flag: "🇵🇦", fifa: 1541, group: "L", note: "Effectif complet", absence: 0, host: false, xgDiff: null, recentForm: { gf: 10, ga: 11 } },
+  canada:      { name: "Canada", flag: "🇨🇦", fifa: 1556, group: "B", note: "Pays hôte", absence: 0, host: true, xgDiff: 0.27, recentForm: { gf: 6, ga: 4 } },
+  qatar:       { name: "Qatar", flag: "🇶🇦", fifa: 1450, group: "B", note: "Effectif complet", absence: 0, host: false, xgDiff: -2.48, recentForm: { gf: 2, ga: 6 } },
+  coreedusud:  { name: "Corée du Sud", flag: "🇰🇷", fifa: 1589, group: "A", note: "Effectif complet", absence: 0, host: false, xgDiff: 1.03, recentForm: { gf: 8, ga: 6 } },
+  tchequie:    { name: "Tchéquie", flag: "🇨🇿", fifa: 1501, group: "A", note: "Effectif complet", absence: 0, host: false, xgDiff: -1.03, recentForm: { gf: 10, ga: 8 } },
+  afriquedusud:{ name: "Afrique du Sud", flag: "🇿🇦", fifa: 1460, group: "A", note: "Effectif complet", absence: 0, host: false, xgDiff: -1.34, recentForm: { gf: 3, ga: 7 } },
+};
+
+const FIXTURES = [
+  { label: "17/06 — Portugal vs RD Congo", a: "portugal", b: "rdcongo",
+    odds: { a: 75.0, draw: 16.0, b: 9.0 } },
+  { label: "17/06 — Angleterre vs Croatie", a: "angleterre", b: "croatie",
+    odds: { a: 56.0, draw: 25.0, b: 19.0 } },
+  { label: "17/06 — Argentine vs Algérie", a: "argentine", b: "algerie",
+    odds: { a: 69.0, draw: 20.0, b: 11.0 } },
+  { label: "17/06 — Irak vs Norvège", a: "irak", b: "norvege",
+    odds: { a: 6.0, draw: 13.0, b: 81.0 } },
+  { label: "17/06 — Autriche vs Jordanie", a: "autriche", b: "jordanie",
+    odds: { a: 73.0, draw: 17.0, b: 10.0 } },
+  { label: "18/06 — Ghana vs Panama", a: "ghana", b: "panama",
+    odds: { a: 45.0, draw: 27.0, b: 28.0 } },
+  { label: "18/06 — Ouzbékistan vs Colombie", a: "ouzbekistan", b: "colombie",
+    odds: { a: 10.7, draw: 19.4, b: 69.9 } },
+];
+
+const AVG_GOALS = 1.35;
+const FIFA_REF = 1700;
+
+function strengthFromFifa(team) {
+  let base = (team.fifa / FIFA_REF) + team.absence;
+  if (team.xgDiff !== null) {
+    // Le différentiel xG d'un seul match est un signal volatil : on le pondère
+    // modérément (15% de poids) pour affiner sans écraser le classement FIFA.
+    base += (team.xgDiff / 10) * 0.15;
+  }
+  return { attack: base, defense: 1 / base };
+}
+
+function poisson(k, lambda) {
+  let fact = 1;
+  for (let i = 2; i <= k; i++) fact *= i;
+  return Math.pow(lambda, k) * Math.exp(-lambda) / fact;
+}
+
+function fillSelect(sel, defaultKey) {
+  sel.innerHTML = '';
+  Object.entries(TEAMS).sort((a,b) => a[1].name.localeCompare(b[1].name)).forEach(([key, t]) => {
+    const opt = document.createElement('option');
+    opt.value = key;
+    opt.textContent = t.flag + ' ' + t.name;
+    if (key === defaultKey) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+const teamASel = document.getElementById('team-a');
+const teamBSel = document.getElementById('team-b');
+const fixtureSel = document.getElementById('fixture-select');
+
+fillSelect(teamASel, 'portugal');
+fillSelect(teamBSel, 'rdcongo');
+
+const blankOpt = document.createElement('option');
+blankOpt.value = '';
+blankOpt.textContent = 'Choisir un match...';
+fixtureSel.appendChild(blankOpt);
+FIXTURES.forEach((f, i) => {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = f.label;
+  fixtureSel.appendChild(opt);
+});
+fixtureSel.value = '';
+
+// ---- Chargement en direct depuis le serveur (optionnel) ----
+const liveLoadBtn = document.getElementById('live-load-btn');
+const liveStatus = document.getElementById('live-status');
+
+if (!SERVER_URL) {
+  liveLoadBtn.disabled = true;
+  liveStatus.textContent = 'Mode hors-ligne : configure SERVER_URL dans le code pour activer le chargement en direct.';
+} else {
+  liveLoadBtn.addEventListener('click', loadLiveFixtures);
+}
+
+// Table de correspondance : noms anglais (tels que renvoyés par l'API-Football)
+// vers les clés de notre base locale. Nécessaire car les noms officiels FIFA
+// en anglais diffèrent souvent du nom français utilisé dans l'app (ex. "Korea
+// Republic" pour la Corée du Sud, "Czechia" pour la Tchéquie).
+const API_NAME_TO_KEY = {
+  'france': 'france', 'spain': 'espagne', 'argentina': 'argentine',
+  'england': 'angleterre', 'portugal': 'portugal', 'brazil': 'bresil',
+  'netherlands': 'paysbas', 'holland': 'paysbas', 'morocco': 'maroc',
+  'belgium': 'belgique', 'germany': 'allemagne', 'croatia': 'croatie',
+  'colombia': 'colombie', 'senegal': 'senegal', 'mexico': 'mexique',
+  'usa': 'usa', 'united states': 'usa', 'us': 'usa', 'uruguay': 'uruguay',
+  'japan': 'japon', 'switzerland': 'suisse', 'norway': 'norvege',
+  'iraq': 'irak', 'algeria': 'algerie', 'austria': 'autriche',
+  'jordan': 'jordanie', 'dr congo': 'rdcongo', 'congo dr': 'rdcongo',
+  'democratic republic of the congo': 'rdcongo', 'uzbekistan': 'ouzbekistan',
+  'ghana': 'ghana', 'panama': 'panama', 'canada': 'canada', 'qatar': 'qatar',
+  'south korea': 'coreedusud', 'korea republic': 'coreedusud', 'korea': 'coreedusud',
+  'czechia': 'tchequie', 'czech republic': 'tchequie',
+  'south africa': 'afriquedusud',
+};
+
+function findTeamKeyByName(apiName) {
+  const normalized = apiName.toLowerCase().trim();
+  if (API_NAME_TO_KEY[normalized]) return API_NAME_TO_KEY[normalized];
+  // Filet de sécurité : correspondance approximative sur le nom français
+  return Object.entries(TEAMS).find(([key, t]) =>
+    t.name.toLowerCase() === normalized || normalized.includes(t.name.toLowerCase())
+  )?.[0] || null;
+}
+
+async function loadLiveFixtures() {
+  liveLoadBtn.disabled = true;
+  liveStatus.className = 'live-status';
+  liveStatus.textContent = 'Connexion au serveur... (le premier appel peut prendre une minute si le serveur dormait)';
+
+  try {
+    const resp = await fetch(SERVER_URL + '/api/fixtures');
+    if (!resp.ok) throw new Error('Le serveur a répondu avec une erreur (' + resp.status + ')');
+    const data = await resp.json();
+
+    let added = 0;
+    let skippedUnknown = 0;
+    (data.fixtures || []).forEach((f) => {
+      const homeKey = findTeamKeyByName(f.home.name);
+      const awayKey = findTeamKeyByName(f.away.name);
+      // On n'ajoute que les matchs dont les deux équipes sont déjà connues
+      // de l'app (sinon on n'a pas de stats FIFA/xG pour elles).
+      if (!homeKey || !awayKey) { skippedUnknown++; return; }
+
+      const dateLabel = new Date(f.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' });
+      const opt = document.createElement('option');
+      opt.value = 'live-' + f.fixtureId;
+      opt.textContent = '🔴 ' + dateLabel + ' — ' + f.home.name + ' vs ' + f.away.name;
+      fixtureSel.appendChild(opt);
+
+      FIXTURES.push({ label: opt.textContent, a: homeKey, b: awayKey, odds: null });
+      opt.value = FIXTURES.length - 1;
+      added++;
+    });
+
+    if (added > 0) {
+      liveStatus.className = 'live-status ok';
+      liveStatus.textContent = added + ' match(s) à venir ajouté(s) à la liste ci-dessus.';
+    } else if (skippedUnknown > 0) {
+      liveStatus.className = 'live-status error';
+      liveStatus.textContent = skippedUnknown + ' match(s) trouvé(s) mais équipe(s) non reconnue(s) dans la base locale.';
+    } else {
+      liveStatus.className = 'live-status';
+      liveStatus.textContent = 'Aucun match à venir trouvé pour le moment (le tournoi est peut-être entre deux journées).';
+    }
+  } catch (err) {
+    liveStatus.className = 'live-status error';
+    liveStatus.textContent = 'Connexion impossible : ' + err.message;
+  } finally {
+    liveLoadBtn.disabled = false;
+  }
+}
+
+let activeFixtureOdds = null;
+
+fixtureSel.addEventListener('change', () => {
+  if (fixtureSel.value === '') { activeFixtureOdds = null; render(); return; }
+  const f = FIXTURES[fixtureSel.value];
+  teamASel.value = f.a;
+  teamBSel.value = f.b;
+  activeFixtureOdds = f.odds || null;
+  render();
+});
+
+function teamBlockHTML(team) {
+  const noteClass = team.absence < 0 ? 'team-note flag' : 'team-note';
+  const xgLine = team.xgDiff !== null
+    ? `<div class="team-xg">xG diff. (J1) : ${team.xgDiff > 0 ? '+' : ''}${team.xgDiff.toFixed(2)}</div>`
+    : `<div class="team-xg muted">xG : pas encore joué</div>`;
+  const rf = team.recentForm;
+  const formLine = rf
+    ? `<div class="team-form">Forme (5 derniers matchs) : ${(rf.gf / 5).toFixed(1)} marqués / ${(rf.ga / 5).toFixed(1)} concédés en moy.</div>`
+    : '';
+  return `
+    <div class="team-name">${team.flag} ${team.name}</div>
+    <div class="team-meta">FIFA ${team.fifa} pts${team.host ? ' · pays hôte' : ''}</div>
+    ${xgLine}
+    ${formLine}
+    <div class="${noteClass}">${team.note}</div>
+  `;
+}
+
+function render() {
+  const a = TEAMS[teamASel.value];
+  const b = TEAMS[teamBSel.value];
+
+  document.getElementById('team-a-block').innerHTML = teamBlockHTML(a);
+  document.getElementById('team-b-block').innerHTML = teamBlockHTML(b, true);
+
+  const sa = strengthFromFifa(a);
+  const sb = strengthFromFifa(b);
+
+  const lambdaA = sa.attack * sb.defense * AVG_GOALS;
+  const lambdaB = sb.attack * sa.defense * AVG_GOALS;
+
+  document.getElementById('score-display').textContent = lambdaA.toFixed(1) + ' – ' + lambdaB.toFixed(1);
+
+  const maxGoals = 6;
+  let aWin = 0, draw = 0, bWin = 0;
+  let best = { h: 0, a: 0, p: 0 };
+
+  for (let h = 0; h <= maxGoals; h++) {
+    for (let aw = 0; aw <= maxGoals; aw++) {
+      const p = poisson(h, lambdaA) * poisson(aw, lambdaB);
+      if (h > aw) aWin += p;
+      else if (h === aw) draw += p;
+      else bWin += p;
+      if (p > best.p) best = { h, a: aw, p };
+    }
+  }
+
+  const aPct = Math.round(aWin * 1000) / 10;
+  const drawPct = Math.round(draw * 1000) / 10;
+  const bPct = Math.round(bWin * 1000) / 10;
+  const scorePct = Math.round(best.p * 1000) / 10;
+
+  document.getElementById('label-a').textContent = 'Victoire ' + a.name + ' ' + aPct + '%';
+  document.getElementById('label-b').textContent = 'Victoire ' + b.name + ' ' + bPct + '%';
+
+  document.getElementById('seg-a').style.width = aPct + '%';
+  document.getElementById('seg-a').textContent = aPct + '%';
+  document.getElementById('seg-draw').style.width = drawPct + '%';
+  document.getElementById('seg-draw').textContent = drawPct + '%';
+  document.getElementById('seg-b').style.width = bPct + '%';
+  document.getElementById('seg-b').textContent = bPct + '%';
+
+  document.getElementById('best-score').textContent = best.h + ' – ' + best.a;
+  document.getElementById('best-pct').textContent = '(' + scorePct + '%)';
+
+  renderOdds(a, b, aPct, drawPct, bPct);
+}
+
+function edgeClass(diff) {
+  if (Math.abs(diff) < 3) return 'flat';
+  return diff > 0 ? 'pos' : 'neg';
+}
+function edgeLabel(diff) {
+  if (Math.abs(diff) < 3) return '≈ aligné';
+  return (diff > 0 ? '+' : '') + diff.toFixed(1) + ' pts';
+}
+
+function renderOdds(a, b, aPct, drawPct, bPct) {
+  const zone = document.getElementById('odds-zone');
+  if (!activeFixtureOdds) {
+    zone.innerHTML = `
+      <div class="odds-card">
+        <div class="odds-card-head"><span class="odds-card-title">Cote vs modèle</span></div>
+        <div class="odds-card-empty">Choisis un match dans la liste « Match à venir » pour comparer la prédiction du modèle aux cotes des bookmakers.</div>
+      </div>
+    `;
+    return;
+  }
+  const o = activeFixtureOdds;
+  const diffA = aPct - o.a;
+  const diffDraw = drawPct - o.draw;
+  const diffB = bPct - o.b;
+
+  zone.innerHTML = `
+    <div class="odds-card">
+      <div class="odds-card-head"><span class="odds-card-title">Cote vs modèle</span></div>
+      <div class="odds-legend"><span>Issue</span><span>Modèle</span><span>Marché</span><span>Écart</span></div>
+      <div class="odds-row">
+        <span class="odds-outcome">${a.name}</span>
+        <span class="odds-val model">${aPct}%</span>
+        <span class="odds-val market">${o.a}%</span>
+        <span class="odds-edge ${edgeClass(diffA)}">${edgeLabel(diffA)}</span>
+      </div>
+      <div class="odds-row">
+        <span class="odds-outcome">Nul</span>
+        <span class="odds-val model">${drawPct}%</span>
+        <span class="odds-val market">${o.draw}%</span>
+        <span class="odds-edge ${edgeClass(diffDraw)}">${edgeLabel(diffDraw)}</span>
+      </div>
+      <div class="odds-row">
+        <span class="odds-outcome">${b.name}</span>
+        <span class="odds-val model">${bPct}%</span>
+        <span class="odds-val market">${o.b}%</span>
+        <span class="odds-edge ${edgeClass(diffB)}">${edgeLabel(diffB)}</span>
+      </div>
+    </div>
+  `;
+}
+
+teamASel.addEventListener('change', () => { fixtureSel.value=''; activeFixtureOdds = null; render(); });
+teamBSel.addEventListener('change', () => { fixtureSel.value=''; activeFixtureOdds = null; render(); });
+render();
+
+// ---- Groupes ----
+const groupsGrid = document.getElementById('groups-grid');
+const byGroup = {};
+Object.values(TEAMS).forEach(t => {
+  if (!byGroup[t.group]) byGroup[t.group] = [];
+  byGroup[t.group].push(t);
+});
+Object.keys(byGroup).sort().forEach(letter => {
+  const teams = byGroup[letter].sort((x,y) => y.fifa - x.fifa);
+  const card = document.createElement('div');
+  card.className = 'group-card';
+  card.innerHTML = `
+    <div class="group-card-head">
+      <span class="group-letter">Groupe ${letter}</span>
+      <span class="group-status">${teams.length} équipes</span>
+    </div>
+    ${teams.map(t => `
+      <div class="group-team-row">
+        <span class="group-team-name">${t.flag} ${t.name}${t.host ? ' 🏟' : ''}</span>
+        <span class="group-team-fifa">${t.fifa}</span>
+      </div>
+    `).join('')}
+  `;
+  groupsGrid.appendChild(card);
+});
+
+// ---- Classement FIFA ----
+const rankBody = document.getElementById('rank-body');
+const sorted = Object.values(TEAMS).sort((a,b) => b.fifa - a.fifa);
+const maxFifa = sorted[0].fifa;
+
+const podiumEl = document.getElementById('podium');
+const medalClass = ['gold', 'silver', 'bronze'];
+const medalLabel = ['1er', '2e', '3e'];
+sorted.slice(0, 3).forEach((t, i) => {
+  const card = document.createElement('div');
+  card.className = 'podium-card ' + medalClass[i];
+  card.innerHTML = `
+    <div class="podium-rank">${medalLabel[i]}</div>
+    <div class="podium-name">${t.flag} ${t.name}</div>
+    <div class="podium-pts">${t.fifa} pts</div>
+  `;
+  podiumEl.appendChild(card);
+});
+
+sorted.forEach((t, i) => {
+  const tr = document.createElement('tr');
+  const barPct = Math.round((t.fifa / maxFifa) * 100);
+  tr.innerHTML = `
+    <td class="rank-num">${i + 1}</td>
+    <td class="rank-name">${t.flag} ${t.name}</td>
+    <td class="rank-bar-cell"><div class="rank-bar-track"><div class="rank-bar-fill" style="width:${barPct}%"></div></div></td>
+    <td class="rank-pts">${t.fifa}</td>
+  `;
+  rankBody.appendChild(tr);
+});
+
+document.getElementById('stat-teams').textContent = Object.keys(TEAMS).length;
+
+// ---- Décor stade : points scintillants des gradins ----
+const crowdRow = document.getElementById('crowd-row');
+for (let i = 0; i < 28; i++) {
+  const dot = document.createElement('div');
+  dot.className = 'crowd-dot';
+  dot.style.animationDelay = (Math.random() * 3.2).toFixed(2) + 's';
+  crowdRow.appendChild(dot);
+}
+
+// ---- Tabs ----
+document.querySelectorAll('nav.tabs button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('section.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
