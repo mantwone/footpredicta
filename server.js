@@ -220,9 +220,10 @@ app.get("/api/team-stats-prev/:teamId/:compId", async (req, res) => {
 // Historique des confrontations directes entre deux équipes
 app.get("/api/h2h/:homeId/:awayId", async (req, res) => {
   const { homeId, awayId } = req.params;
-  const key = `${homeId}_${awayId}`;
+  const key = `h2h_${homeId}_${awayId}`;
 
-  // Compétitions autorisées — on exclut tout ce qui n'est pas européen
+  // On filtre uniquement les ligues/coupes européennes majeures connues
+  // plus les championnats nationaux des deux équipes
   const ALLOWED_COMPS = new Set([
     "comp_3039", "comp_8814", "comp_4643", "comp_5840", "comp_0256",
     "comp_3498", "comp_7739", "comp_408698",
@@ -230,19 +231,43 @@ app.get("/api/h2h/:homeId/:awayId", async (req, res) => {
 
   try {
     const result = await cached(caches.h2h, key, async () => {
-      const data = await statsApiGet("/football/matches", {
-        home_team_id: homeId,
-        away_team_id: awayId,
-        status: "finished",
-        per_page: 20,
-        sort: "utc_date:desc",
-      });
-      const matches = (data.data || []).filter(m =>
+      // Deux appels : home vs away ET away vs home
+      const [d1, d2] = await Promise.all([
+        statsApiGet("/football/matches", {
+          home_team_id: homeId,
+          away_team_id: awayId,
+          status: "finished",
+          per_page: 20,
+        }),
+        statsApiGet("/football/matches", {
+          home_team_id: awayId,
+          away_team_id: homeId,
+          status: "finished",
+          per_page: 20,
+        }),
+      ]);
+
+      const all = [...(d1.data || []), ...(d2.data || [])];
+
+      // Filtrer : compétitions connues + score disponible
+      let matches = all.filter(m =>
         ALLOWED_COMPS.has(m.competition_id) &&
         m.score?.final_score?.home !== null &&
         m.score?.final_score?.away !== null
-      ).slice(0, 6);
-      return { h2h: matches };
+      );
+
+      // Si aucun résultat dans nos compétitions, on prend tous les matchs
+      // avec un score valide (pour les équipes qui ne jouent pas l'Europe)
+      if (matches.length === 0) {
+        matches = all.filter(m =>
+          m.score?.final_score?.home !== null &&
+          m.score?.final_score?.away !== null
+        );
+      }
+
+      // Trier par date décroissante et limiter à 6
+      matches.sort((a, b) => new Date(b.utc_date) - new Date(a.utc_date));
+      return { h2h: matches.slice(0, 6) };
     }, 60 * 60 * 1000)();
     res.json(result);
   } catch (err) {
