@@ -217,56 +217,45 @@ app.get("/api/team-stats-prev/:teamId/:compId", async (req, res) => {
   }
 });
 
-// Historique des confrontations directes entre deux équipes
+// Historique des confrontations directes — filtre par compétition + saisons
 app.get("/api/h2h/:homeId/:awayId", async (req, res) => {
   const { homeId, awayId } = req.params;
-  const key = `h2h_${homeId}_${awayId}`;
-
-  // On filtre uniquement les ligues/coupes européennes majeures connues
-  // plus les championnats nationaux des deux équipes
-  const ALLOWED_COMPS = new Set([
-    "comp_3039", "comp_8814", "comp_4643", "comp_5840", "comp_0256",
-    "comp_3498", "comp_7739", "comp_408698",
-  ]);
+  const { comp_id } = req.query; // compétition actuelle passée par le frontend
+  const key = `h2h_${homeId}_${awayId}_${comp_id || 'any'}`;
 
   try {
     const result = await cached(caches.h2h, key, async () => {
-      // Deux appels : home vs away ET away vs home
-      const [d1, d2] = await Promise.all([
-        statsApiGet("/football/matches", {
-          home_team_id: homeId,
-          away_team_id: awayId,
-          status: "finished",
-          per_page: 20,
-        }),
-        statsApiGet("/football/matches", {
-          home_team_id: awayId,
-          away_team_id: homeId,
-          status: "finished",
-          per_page: 20,
-        }),
-      ]);
+      if (!comp_id || !PREV_SEASON_IDS[comp_id]) {
+        return { h2h: [] };
+      }
 
-      const all = [...(d1.data || []), ...(d2.data || [])];
+      // On récupère les 3 dernières saisons disponibles pour cette compétition
+      const seasonsResp = await statsApiGet(`/football/competitions/${comp_id}/seasons`);
+      const seasons = (seasonsResp.data || seasonsResp || [])
+        .filter(s => !s.is_current)
+        .slice(0, 3)
+        .map(s => s.id);
 
-      // Dédoublonner par ID de match
-      const seen = new Set();
-      const unique = all.filter(m => {
-        if (seen.has(m.id)) return false;
-        seen.add(m.id);
-        return true;
-      });
+      // Pour chaque saison, on cherche les matchs entre ces deux équipes
+      const allMatches = [];
+      for (const seasonId of seasons) {
+        try {
+          const data = await statsApiGet("/football/matches", {
+            competition_id: comp_id,
+            season_id: seasonId,
+            status: "finished",
+            per_page: 100,
+          });
+          const matches = (data.data || []).filter(m =>
+            (m.home_team.id === homeId && m.away_team.id === awayId) ||
+            (m.home_team.id === awayId && m.away_team.id === homeId)
+          );
+          allMatches.push(...matches);
+        } catch { continue; }
+      }
 
-      // Filtrer : compétitions connues + score disponible
-      const matches = unique.filter(m =>
-        ALLOWED_COMPS.has(m.competition_id) &&
-        m.score?.final_score?.home !== null &&
-        m.score?.final_score?.away !== null
-      );
-
-      // Trier par date décroissante et limiter à 6
-      matches.sort((a, b) => new Date(b.utc_date) - new Date(a.utc_date));
-      return { h2h: matches.slice(0, 6) };
+      allMatches.sort((a, b) => new Date(b.utc_date) - new Date(a.utc_date));
+      return { h2h: allMatches.slice(0, 6) };
     }, 60 * 60 * 1000)();
     res.json(result);
   } catch (err) {
