@@ -32,12 +32,14 @@ const BASE_URL = "https://api.thestatsapi.com/api";
 // ---- IDs des compétitions sur TheStatsAPI ----
 // Ces IDs sont stables — ils ne changent pas d'une saison à l'autre.
 const COMPETITIONS = {
-  premier_league:   { id: "comp_3039", name: "Premier League",       country: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-  la_liga:          { id: "comp_8814", name: "LaLiga",               country: "Spain",   flag: "🇪🇸" },
-  bundesliga:       { id: "comp_4643", name: "Bundesliga",           country: "Germany", flag: "🇩🇪" },
-  serie_a:          { id: "comp_5840", name: "Serie A",              country: "Italy",   flag: "🇮🇹" },
-  ligue_1:          { id: "comp_0256", name: "Ligue 1",              country: "France",  flag: "🇫🇷" },
-  champions_league: { id: "comp_3498", name: "Champions League",     country: "Europe",  flag: "🏆" },
+  premier_league:    { id: "comp_3039",   name: "Premier League",      country: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+  la_liga:           { id: "comp_8814",   name: "LaLiga",              country: "Spain",   flag: "🇪🇸" },
+  bundesliga:        { id: "comp_4643",   name: "Bundesliga",          country: "Germany", flag: "🇩🇪" },
+  serie_a:           { id: "comp_5840",   name: "Serie A",             country: "Italy",   flag: "🇮🇹" },
+  ligue_1:           { id: "comp_0256",   name: "Ligue 1",             country: "France",  flag: "🇫🇷" },
+  champions_league:  { id: "comp_3498",   name: "Champions League",    country: "Europe",  flag: "🏆" },
+  europa_league:     { id: "comp_7739",   name: "Europa League",       country: "Europe",  flag: "🟠" },
+  conference_league: { id: "comp_408698", name: "Conference League",   country: "Europe",  flag: "🔵" },
 };
 
 // ---- Appel générique à TheStatsAPI ----
