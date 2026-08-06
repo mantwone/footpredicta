@@ -308,7 +308,78 @@ app.get("/api/search-competitions", async (req, res) => {
   }
 });
 
-// Debug H2H — réponse brute sans filtre
+// Cache pour le xG moyen par équipe/saison
+const xgAvgCache = new Map();
+
+/**
+ * Calcule le xG moyen d'une équipe sur la saison précédente.
+ * Récupère tous les matchs terminés de la saison, puis les stats xG
+ * de chaque match en parallèle (batch de 10), et moyenne les résultats.
+ * Cache 24h car les données historiques ne changent pas.
+ */
+async function computeTeamXgAvg(teamId, compId) {
+  const prevSeasonId = PREV_SEASON_IDS[compId];
+  if (!prevSeasonId) return null;
+
+  // 1. Récupérer tous les matchs terminés de l'équipe dans la saison
+  const fixturesResp = await statsApiGet("/football/matches", {
+    competition_id: compId,
+    season_id: prevSeasonId,
+    status: "finished",
+    per_page: 100,
+  });
+
+  const allMatches = (fixturesResp.data || []).filter(m =>
+    m.home_team.id === teamId || m.away_team.id === teamId
+  );
+
+  if (allMatches.length === 0) return null;
+
+  // 2. Récupérer les stats xG en parallèle par batch de 10
+  let totalXg = 0;
+  let count = 0;
+
+  for (let i = 0; i < allMatches.length; i += 10) {
+    const batch = allMatches.slice(i, i + 10);
+    const results = await Promise.allSettled(
+      batch.map(m => statsApiGet(`/football/matches/${m.id}/stats`))
+    );
+
+    results.forEach((r, idx) => {
+      if (r.status !== 'fulfilled') return;
+      const data = r.value?.data;
+      if (!data) return;
+      const match = batch[idx];
+      const isHome = match.home_team.id === teamId;
+      const xg = isHome ? data.home?.xg : data.away?.xg;
+      if (xg !== null && xg !== undefined) {
+        totalXg += xg;
+        count++;
+      }
+    });
+  }
+
+  if (count === 0) return null;
+  return { xgAvg: totalXg / count, matchesUsed: count, season: prevSeasonId };
+}
+
+app.get("/api/team-xg/:teamId/:compId", async (req, res) => {
+  const { teamId, compId } = req.params;
+  const key = `xg_${teamId}_${compId}`;
+  try {
+    const now = Date.now();
+    const cached = xgAvgCache.get(key);
+    if (cached && now - cached.fetchedAt < 24 * 60 * 60 * 1000) {
+      return res.json({ cached: true, ...cached.data });
+    }
+    const result = await computeTeamXgAvg(teamId, compId);
+    xgAvgCache.set(key, { data: result, fetchedAt: now });
+    res.json({ cached: false, ...result });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
 app.get("/api/debug-h2h/:homeId/:awayId", async (req, res) => {
   const { homeId, awayId } = req.params;
   try {
@@ -319,6 +390,33 @@ app.get("/api/debug-h2h/:homeId/:awayId", async (req, res) => {
     res.json({
       direction1: (d1.data || []).map(m => ({ id: m.id, comp: m.competition_id, date: m.utc_date, home: m.home_team.name, away: m.away_team.name, score: m.score?.final_score })),
       direction2: (d2.data || []).map(m => ({ id: m.id, comp: m.competition_id, date: m.utc_date, home: m.home_team.name, away: m.away_team.name, score: m.score?.final_score })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Debug : matchs d'une équipe dans une saison spécifique
+app.get("/api/debug-team-matches/:teamId/:seasonId", async (req, res) => {
+  const { teamId, seasonId } = req.params;
+  try {
+    const data = await statsApiGet("/football/matches", {
+      season_id: seasonId,
+      status: "finished",
+      per_page: 10,
+    });
+    const matches = (data.data || []).filter(m =>
+      m.home_team.id === teamId || m.away_team.id === teamId
+    );
+    res.json({
+      total_returned: (data.data || []).length,
+      team_matches: matches.map(m => ({
+        id: m.id,
+        date: m.utc_date,
+        home: { id: m.home_team.id, name: m.home_team.name },
+        away: { id: m.away_team.id, name: m.away_team.name },
+        score: m.score?.final_score,
+      }))
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
