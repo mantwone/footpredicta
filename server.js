@@ -249,21 +249,20 @@ app.get("/api/h2h/:homeId/:awayId", async (req, res) => {
 
       const all = [...(d1.data || []), ...(d2.data || [])];
 
+      // Dédoublonner par ID de match
+      const seen = new Set();
+      const unique = all.filter(m => {
+        if (seen.has(m.id)) return false;
+        seen.add(m.id);
+        return true;
+      });
+
       // Filtrer : compétitions connues + score disponible
-      let matches = all.filter(m =>
+      const matches = unique.filter(m =>
         ALLOWED_COMPS.has(m.competition_id) &&
         m.score?.final_score?.home !== null &&
         m.score?.final_score?.away !== null
       );
-
-      // Si aucun résultat dans nos compétitions, on prend tous les matchs
-      // avec un score valide (pour les équipes qui ne jouent pas l'Europe)
-      if (matches.length === 0) {
-        matches = all.filter(m =>
-          m.score?.final_score?.home !== null &&
-          m.score?.final_score?.away !== null
-        );
-      }
 
       // Trier par date décroissante et limiter à 6
       matches.sort((a, b) => new Date(b.utc_date) - new Date(a.utc_date));
