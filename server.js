@@ -319,6 +319,23 @@ app.get("/api/search-competitions", async (req, res) => {
   }
 });
 
+// Debug H2H — réponse brute sans filtre
+app.get("/api/debug-h2h/:homeId/:awayId", async (req, res) => {
+  const { homeId, awayId } = req.params;
+  try {
+    const [d1, d2] = await Promise.all([
+      statsApiGet("/football/matches", { home_team_id: homeId, away_team_id: awayId, status: "finished", per_page: 5 }),
+      statsApiGet("/football/matches", { home_team_id: awayId, away_team_id: homeId, status: "finished", per_page: 5 }),
+    ]);
+    res.json({
+      direction1: (d1.data || []).map(m => ({ id: m.id, comp: m.competition_id, date: m.utc_date, home: m.home_team.name, away: m.away_team.name, score: m.score?.final_score })),
+      direction2: (d2.data || []).map(m => ({ id: m.id, comp: m.competition_id, date: m.utc_date, home: m.home_team.name, away: m.away_team.name, score: m.score?.final_score })),
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Vider tous les caches (utile après un déploiement ou pour forcer un refresh)
 app.get("/api/clear-cache", (req, res) => {
   Object.values(caches).forEach((c) => c.clear());
