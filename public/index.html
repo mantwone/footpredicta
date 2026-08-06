@@ -405,6 +405,8 @@ async function loadMatchData(f) {
 
   const sh = statsH.value?.stats || null;
   const sa = statsA.value?.stats || null;
+  console.log('statsH.value keys:', Object.keys(statsH.value || {}));
+  console.log('sh:', sh, 'sa:', sa);
   const odds = oddsData.value?.odds || null;
   const lineups = lineupsData.value?.lineups || null;
   const h2h = h2hData.value?.h2h || null;
