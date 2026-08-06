@@ -400,7 +400,7 @@ async function loadMatchData(f) {
     fetch(`${SERVER}/api/team-stats-prev/${f.away_team.id}/${compId}`).then(r=>r.json()).catch(()=>null),
     f.odds_available ? fetch(`${SERVER}/api/odds/${f.id}`).then(r=>r.json()) : Promise.resolve(null),
     fetch(`${SERVER}/api/lineups/${f.id}`).then(r=>r.json()).catch(()=>null),
-    fetch(`${SERVER}/api/h2h/${f.home_team.id}/${f.away_team.id}`).then(r=>r.json()).catch(()=>null),
+    fetch(`${SERVER}/api/h2h/${f.home_team.id}/${f.away_team.id}?comp_id=${compId}`).then(r=>r.json()).catch(()=>null),
   ]);
 
   const sh = statsH.value?.stats || null;
