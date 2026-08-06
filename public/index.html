@@ -394,7 +394,6 @@ async function selectMatch(matchId) {
 }
 
 async function loadMatchData(f) {
-  console.log('loadMatchData called for:', f.id);
   const compId = currentComp;
   const [statsH, statsA, oddsData, lineupsData, h2hData] = await Promise.allSettled([
     fetch(`${SERVER}/api/team-stats-prev/${f.home_team.id}/${compId}`).then(r=>r.json()).catch(()=>null),
@@ -406,8 +405,6 @@ async function loadMatchData(f) {
 
   const sh = statsH.value?.stats || null;
   const sa = statsA.value?.stats || null;
-  console.log('statsH.value keys:', Object.keys(statsH.value || {}));
-  console.log('sh:', sh, 'sa:', sa);
   const odds = oddsData.value?.odds || null;
   const lineups = lineupsData.value?.lineups || null;
   const h2h = h2hData.value?.h2h || null;
@@ -427,7 +424,6 @@ function poisson(k, lambda) {
 
 function computeLambda(statsTeam, statsOpp) {
   const DEFAULT = AVG_GOALS;
-  console.log('computeLambda called:', statsTeam?.goals_for, statsOpp?.goals_against);
 
   // Buts marqués par match sur la saison précédente complète
   let attack = DEFAULT;
