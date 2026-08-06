@@ -426,6 +426,7 @@ function poisson(k, lambda) {
 
 function computeLambda(statsTeam, statsOpp) {
   const DEFAULT = AVG_GOALS;
+  console.log('computeLambda called:', statsTeam?.goals_for, statsOpp?.goals_against);
 
   // Buts marqués par match sur la saison précédente complète
   let attack = DEFAULT;
