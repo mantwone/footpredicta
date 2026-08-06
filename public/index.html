@@ -400,15 +400,17 @@ async function selectMatch(matchId) {
   activeStatsHome = null;
   activeStatsAway = null;
 
-  renderMatchPage(f, null, null, null, null, null);
+  renderMatchPage(f, null, null, null, null, null, null, null);
   loadMatchData(f);
 }
 
 async function loadMatchData(f) {
   const compId = currentComp;
-  const [statsH, statsA, oddsData, lineupsData, h2hData] = await Promise.allSettled([
+  const [statsH, statsA, xgH, xgA, oddsData, lineupsData, h2hData] = await Promise.allSettled([
     fetch(`${SERVER}/api/team-stats-prev/${f.home_team.id}/${compId}`).then(r=>r.json()).catch(()=>null),
     fetch(`${SERVER}/api/team-stats-prev/${f.away_team.id}/${compId}`).then(r=>r.json()).catch(()=>null),
+    fetch(`${SERVER}/api/team-xg/${f.home_team.id}/${compId}`).then(r=>r.json()).catch(()=>null),
+    fetch(`${SERVER}/api/team-xg/${f.away_team.id}/${compId}`).then(r=>r.json()).catch(()=>null),
     f.odds_available ? fetch(`${SERVER}/api/odds/${f.id}`).then(r=>r.json()) : Promise.resolve(null),
     fetch(`${SERVER}/api/lineups/${f.id}`).then(r=>r.json()).catch(()=>null),
     fetch(`${SERVER}/api/h2h/${f.home_team.id}/${f.away_team.id}?comp_id=${compId}`).then(r=>r.json()).catch(()=>null),
@@ -416,6 +418,8 @@ async function loadMatchData(f) {
 
   const sh = statsH.value?.stats || null;
   const sa = statsA.value?.stats || null;
+  const xgh = xgH.value?.xgAvg || null;
+  const xga = xgA.value?.xgAvg || null;
   const odds = oddsData.value?.odds || null;
   const lineups = lineupsData.value?.lineups || null;
   const h2h = h2hData.value?.h2h || null;
@@ -423,7 +427,7 @@ async function loadMatchData(f) {
   activeStatsHome = sh;
   activeStatsAway = sa;
 
-  if (activeMatch?.id === f.id) renderMatchPage(f, sh, sa, odds, lineups, h2h);
+  if (activeMatch?.id === f.id) renderMatchPage(f, sh, sa, xgh, xga, odds, lineups, h2h);
 }
 
 // ---- Modèle Poisson ----
@@ -433,25 +437,35 @@ function poisson(k, lambda) {
   return r;
 }
 
-function computeLambda(statsTeam, statsOpp) {
+function computeLambda(statsTeam, statsOpp, xgTeam, xgOpp) {
   const DEFAULT = AVG_GOALS;
 
-  // Buts marqués par match sur la saison précédente complète
-  let attack = DEFAULT;
-  if (statsTeam?.goals_for && statsTeam?.matches_played) {
+  // Attaque : xG réel de saison > buts marqués de saison > défaut
+  let attack;
+  if (xgTeam !== null && xgTeam !== undefined) {
+    attack = xgTeam; // vrai xG moyen par match sur la saison précédente
+  } else if (statsTeam?.goals_for && statsTeam?.matches_played) {
     attack = statsTeam.goals_for / statsTeam.matches_played;
+  } else {
+    attack = DEFAULT;
   }
 
-  // Buts concédés par match de l'adversaire sur la saison précédente
-  let defOpp = DEFAULT;
-  if (statsOpp?.goals_against && statsOpp?.matches_played) {
+  // Défense adverse : xG concédé > buts concédés > défaut
+  let defOpp;
+  if (xgOpp !== null && xgOpp !== undefined) {
+    // On utilise les buts concédés de statsOpp car le xG concédé n'est pas
+    // directement disponible (on a le xG marqué de l'adversaire)
+    defOpp = statsOpp?.goals_against && statsOpp?.matches_played
+      ? statsOpp.goals_against / statsOpp.matches_played
+      : DEFAULT;
+  } else if (statsOpp?.goals_against && statsOpp?.matches_played) {
     defOpp = statsOpp.goals_against / statsOpp.matches_played;
+  } else {
+    defOpp = DEFAULT;
   }
 
-  // Atténuation de l'effet défensif (0.3) pour ne pas écraser l'attaque
   const defRatio = defOpp / DEFAULT;
   const defAttenuated = 1.0 + (defRatio - 1.0) * 0.3;
-
   return Math.max(attack * defAttenuated, 0.3);
 }
 
@@ -478,7 +492,7 @@ function calcProbs(lambdaA, lambdaB) {
 }
 
 // ---- Rendu principal ----
-function renderMatchPage(f, sh, sa, odds, lineups, h2h) {
+function renderMatchPage(f, sh, sa, xgh, xga, odds, lineups, h2h) {
   const main = document.getElementById('main-content');
   if (activeMatch?.id !== f.id) return;
 
@@ -488,18 +502,20 @@ function renderMatchPage(f, sh, sa, odds, lineups, h2h) {
   const abbrA = teamAbbr(f.away_team.name);
   const dateStr = formatDateCET(f.utc_date);
 
-  const lambdaA = computeLambda(sh, sa);
-  const lambdaB = computeLambda(sa, sh);
+  const lambdaA = computeLambda(sh, sa, xgh, xga);
+  const lambdaB = computeLambda(sa, sh, xga, xgh);
   const {aWin, draw, bWin, scores} = calcProbs(lambdaA, lambdaB);
 
   const aPct = Math.round(aWin*1000)/10;
   const dPct = Math.round(draw*1000)/10;
   const bPct = Math.round(bWin*1000)/10;
 
-  const hasStats = sh || sa;
-  const dataNotice = !hasStats
-    ? `<div class="notice" style="margin-bottom:12px">Statistiques de saison en cours de chargement — prédiction provisoire basée sur les moyennes du tournoi.</div>`
-    : `<div class="notice" style="margin-bottom:12px">Prédiction basée sur les statistiques de la saison 2025–2026 (saison précédente complète).</div>`;
+  const hasStats = sh || sa || xgh || xga;
+  const dataNotice = xgh || xga
+    ? `<div class="notice" style="margin-bottom:12px">Prédiction basée sur le xG réel de la saison 2025–2026 (${xgh ? (xgh.toFixed(2) + ' xG/match') : '—'} · ${xga ? (xga.toFixed(2) + ' xG/match') : '—'}).</div>`
+    : sh || sa
+    ? `<div class="notice" style="margin-bottom:12px">Prédiction basée sur les buts de la saison 2025–2026 (xG en cours de calcul...).</div>`
+    : `<div class="notice" style="margin-bottom:12px">Statistiques en cours de chargement...</div>`;
 
   // Scores top 3
   let scoresHtml = '';
