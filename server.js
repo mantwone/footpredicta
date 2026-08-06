@@ -266,6 +266,18 @@ app.get("/api/prev-season/:compId", (req, res) => {
   res.json({ compId, prevSeasonId: seasonId });
 });
 
+// Recherche de compétitions par nom
+app.get("/api/search-competitions", async (req, res) => {
+  const { q } = req.query;
+  try {
+    const data = await statsApiGet("/football/competitions", { search: q });
+    res.json({ competitions: data.data || data });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Vider tous les caches (utile après un déploiement ou pour forcer un refresh)
 app.get("/api/clear-cache", (req, res) => {
   Object.values(caches).forEach((c) => c.clear());
