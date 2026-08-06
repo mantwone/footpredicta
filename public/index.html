@@ -394,6 +394,7 @@ async function selectMatch(matchId) {
 }
 
 async function loadMatchData(f) {
+  console.log('loadMatchData called for:', f.id);
   const compId = currentComp;
   const [statsH, statsA, oddsData, lineupsData, h2hData] = await Promise.allSettled([
     fetch(`${SERVER}/api/team-stats-prev/${f.home_team.id}/${compId}`).then(r=>r.json()).catch(()=>null),
