@@ -221,20 +221,27 @@ app.get("/api/team-stats-prev/:teamId/:compId", async (req, res) => {
 app.get("/api/h2h/:homeId/:awayId", async (req, res) => {
   const { homeId, awayId } = req.params;
   const key = `${homeId}_${awayId}`;
+
+  // Compétitions autorisées — on exclut tout ce qui n'est pas européen
+  const ALLOWED_COMPS = new Set([
+    "comp_3039", "comp_8814", "comp_4643", "comp_5840", "comp_0256",
+    "comp_3498", "comp_7739", "comp_408698",
+  ]);
+
   try {
     const result = await cached(caches.h2h, key, async () => {
       const data = await statsApiGet("/football/matches", {
         home_team_id: homeId,
         away_team_id: awayId,
         status: "finished",
-        per_page: 10,
+        per_page: 20,
         sort: "utc_date:desc",
       });
-      // Filtre : garder uniquement les matchs avec un vrai score final
       const matches = (data.data || []).filter(m =>
+        ALLOWED_COMPS.has(m.competition_id) &&
         m.score?.final_score?.home !== null &&
         m.score?.final_score?.away !== null
-      );
+      ).slice(0, 6);
       return { h2h: matches };
     }, 60 * 60 * 1000)();
     res.json(result);
