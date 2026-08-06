@@ -263,6 +263,17 @@ const SERVER = 'https://footpredicta.onrender.com';
 const AVG_GOALS = 1.35;
 
 let currentComp = 'comp_3039';
+
+const COMP_NAMES = {
+  'comp_3039': 'Premier League',
+  'comp_8814': 'LaLiga',
+  'comp_4643': 'Bundesliga',
+  'comp_5840': 'Serie A',
+  'comp_0256': 'Ligue 1',
+  'comp_3498': 'Champions League',
+  'comp_7739': 'Europa League',
+  'comp_408698': 'Conference League',
+};
 let allFixtures = [];
 let activeMatch = null;
 let activeStatsHome = null;
@@ -581,7 +592,7 @@ function renderMatchPage(f, sh, sa, odds, lineups, h2h) {
   main.innerHTML = `
     ${dataNotice}
     <div class="match-header">
-      <div class="match-meta">Premier League · Journée ${f.matchday}</div>
+      <div class="match-meta">${COMP_NAMES[currentComp] || 'Compétition'} · Journée ${f.matchday}</div>
       <div class="match-title">${f.home_team.name} <span style="color:var(--text-3);font-weight:300">vs</span> ${f.away_team.name}</div>
       <div class="match-info">${dateStr} CET${f.venue?` · ${f.venue}`:''}</div>
     </div>
