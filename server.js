@@ -32,12 +32,12 @@ const BASE_URL = "https://api.thestatsapi.com/api";
 // ---- IDs des compétitions sur TheStatsAPI ----
 // Ces IDs sont stables — ils ne changent pas d'une saison à l'autre.
 const COMPETITIONS = {
-  premier_league:    { id: "comp_3039", name: "Premier League",    country: "England",  flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
-  la_liga:           { id: "comp_3040", name: "La Liga",           country: "Spain",    flag: "🇪🇸" },
-  bundesliga:        { id: "comp_3041", name: "Bundesliga",        country: "Germany",  flag: "🇩🇪" },
-  serie_a:           { id: "comp_3042", name: "Serie A",           country: "Italy",    flag: "🇮🇹" },
-  ligue_1:           { id: "comp_3043", name: "Ligue 1",           country: "France",   flag: "🇫🇷" },
-  champions_league:  { id: "comp_3044", name: "Champions League",  country: "Europe",   flag: "🏆" },
+  premier_league:   { id: "comp_3039", name: "Premier League",       country: "England", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+  la_liga:          { id: "comp_8814", name: "LaLiga",               country: "Spain",   flag: "🇪🇸" },
+  bundesliga:       { id: "comp_4643", name: "Bundesliga",           country: "Germany", flag: "🇩🇪" },
+  serie_a:          { id: "comp_5840", name: "Serie A",              country: "Italy",   flag: "🇮🇹" },
+  ligue_1:          { id: "comp_0256", name: "Ligue 1",              country: "France",  flag: "🇫🇷" },
+  champions_league: { id: "comp_3498", name: "Champions League",     country: "Europe",  flag: "🏆" },
 };
 
 // ---- Appel générique à TheStatsAPI ----
@@ -252,11 +252,11 @@ app.get("/api/seasons/:compId", async (req, res) => {
 // quand la saison en cours n'a pas encore commencé.
 const PREV_SEASON_IDS = {
   "comp_3039": "sn_6125938", // Premier League 2025-2026
-  "comp_3040": "sn_6125939", // La Liga 2025-2026 (à confirmer)
-  "comp_3041": "sn_6125940", // Bundesliga 2025-2026 (à confirmer)
-  "comp_3042": "sn_6125941", // Serie A 2025-2026 (à confirmer)
-  "comp_3043": "sn_6125942", // Ligue 1 2025-2026 (à confirmer)
-  "comp_3044": "sn_6125943", // UCL 2025-2026 (à confirmer)
+  "comp_8814": null,          // LaLiga 2025-2026 (à découvrir via /api/seasons/comp_8814)
+  "comp_4643": null,          // Bundesliga 2025-2026 (à découvrir)
+  "comp_5840": null,          // Serie A 2025-2026 (à découvrir)
+  "comp_0256": null,          // Ligue 1 2025-2026 (à découvrir)
+  "comp_3498": null,          // UCL 2025-2026 (à découvrir)
 };
 
 // Expose l'ID de saison précédente pour qu'on puisse charger les stats historiques
