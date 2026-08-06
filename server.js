@@ -228,8 +228,14 @@ app.get("/api/h2h/:homeId/:awayId", async (req, res) => {
         away_team_id: awayId,
         status: "finished",
         per_page: 10,
+        sort: "utc_date:desc",
       });
-      return { h2h: data.data || [] };
+      // Filtre : garder uniquement les matchs avec un vrai score final
+      const matches = (data.data || []).filter(m =>
+        m.score?.final_score?.home !== null &&
+        m.score?.final_score?.away !== null
+      );
+      return { h2h: matches };
     }, 60 * 60 * 1000)();
     res.json(result);
   } catch (err) {
@@ -253,12 +259,14 @@ app.get("/api/seasons/:compId", async (req, res) => {
 // IDs des saisons précédentes (2025-2026) — utilisés pour les stats historiques
 // quand la saison en cours n'a pas encore commencé.
 const PREV_SEASON_IDS = {
-  "comp_3039": "sn_6125938", // Premier League 2025-2026
-  "comp_8814": null,          // LaLiga 2025-2026 (à découvrir via /api/seasons/comp_8814)
-  "comp_4643": null,          // Bundesliga 2025-2026 (à découvrir)
-  "comp_5840": null,          // Serie A 2025-2026 (à découvrir)
-  "comp_0256": null,          // Ligue 1 2025-2026 (à découvrir)
-  "comp_3498": null,          // UCL 2025-2026 (à découvrir)
+  "comp_3039":   "sn_6125938", // Premier League 25/26
+  "comp_8814":   "sn_7246390", // LaLiga 25/26
+  "comp_4643":   "sn_5789634", // Bundesliga 25/26
+  "comp_5840":   "sn_3061436", // Serie A 25/26
+  "comp_0256":   "sn_6120181", // Ligue 1 25/26
+  "comp_3498":   "sn_5783461", // UCL 25/26
+  "comp_7739":   "sn_0819325", // Europa League 25/26
+  "comp_408698": "sn_1397633", // Conference League 25/26
 };
 
 // Expose l'ID de saison précédente pour qu'on puisse charger les stats historiques
