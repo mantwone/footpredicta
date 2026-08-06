@@ -569,7 +569,11 @@ function renderMatchPage(f, sh, sa, odds, lineups, h2h) {
   if (h2h && h2h.length) {
     h2hHtml = h2h.slice(0,6).map(m=>{
       const d = new Date(m.utc_date).toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit',year:'2-digit'});
-      const sc = m.score?.final_score ? `${m.score.final_score.home??'?'} – ${m.score.final_score.away??'?'}` : '? – ?';
+      const sc = m.score?.final_score?.home !== null && m.score?.final_score?.home !== undefined
+        ? `${m.score.final_score.home} – ${m.score.final_score.away}`
+        : m.score?.regulation?.home !== null && m.score?.regulation?.home !== undefined
+        ? `${m.score.regulation.home} – ${m.score.regulation.away}`
+        : '? – ?';
       return `<div class="h2h-row"><span class="h2h-date">${d}</span><span class="h2h-teams">${m.home_team.name} vs ${m.away_team.name}</span><span class="h2h-score">${sc}</span></div>`;
     }).join('');
   }
